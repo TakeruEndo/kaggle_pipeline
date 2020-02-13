@@ -1,8 +1,8 @@
 データコンペ用のパイプライン
 
 ## 初めに
-本パイプラインは(takapyさんのコード)[https://github.com/takapy0210/ml_pipeline]をクローンして作成いたしました:bow:
-また、kaggleの(House Prices: Advanced Regression Techniques)[https://www.kaggle.com/c/house-prices-advanced-regression-techniques]コンペを想定して作成してあります
+本パイプラインは[takapyさんのコード](https://github.com/takapy0210/ml_pipeline)をクローンして作成いたしました :bow:
+また、kaggleの[House Prices: Advanced Regression Techniques](https://www.kaggle.com/c/house-prices-advanced-regression-techniques)コンペを想定して作成してあります
 
 ## 推論
 ```
