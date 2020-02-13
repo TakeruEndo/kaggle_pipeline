@@ -18,6 +18,9 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 import tensorflow as tf
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
+# 各foldのモデルを保存する配列
+model_array = []
+
 
 class ModelNN(Model):
 
@@ -26,21 +29,14 @@ class ModelNN(Model):
         # データのセット・スケーリング
         validation = va_x is not None
 
-        self.one_hot_encoder = Util.load('one-hot-enc.pkl')
-        tr_x = self.one_hot_encoder.transform(tr_x[self.categoricals])
-
         # scaler = StandardScaler()
-        scaler = MinMaxScaler()
-        scaler.fit(tr_x)
-        tr_x = scaler.transform(tr_x)
-
-        if validation:
-            va_x = self.one_hot_encoder.transform(va_x[self.categoricals])
-            va_x = scaler.transform(va_x)
+        # scaler = MinMaxScaler()
+        # scaler.fit(tr_x)
+        # tr_x = scaler.transform(tr_x)
 
         # パラメータ
-        classes = self.params['classes']
-        layers = self.params['layers']
+        # classes = self.params['classes']
+        # layers = self.params['layers']
         dropout = self.params['dropout']
         units = self.params['units']
         nb_epoch = self.params['nb_epoch']
@@ -50,17 +46,20 @@ class ModelNN(Model):
         model = Sequential()
         model.add(Dense(units, input_shape=(tr_x.shape[1],)))
         model.add(PReLU())
-        model.add(BatchNormalization())
+        # model.add(BatchNormalization())
         model.add(Dropout(dropout))
 
-        for l in range(layers - 1):
-            units = int(units / 2)
-            model.add(Dense(units))
-            model.add(PReLU())
-            model.add(BatchNormalization())
-            model.add(Dropout(dropout))
+        # The Output Layer :
+        model.add(Dense(1, kernel_initializer='normal', activation='linear'))
 
-        model.add(Dense(classes))
+        # 多層にする場合
+        # for l in range(layers - 1):
+        #     units = int(units / 2)
+        #     model.add(Dense(units))
+        #     model.add(PReLU())
+        #     model.add(BatchNormalization())
+        #     model.add(Dropout(dropout))
+
         adam = optimizers.Adam(lr=1e-4)
         model.compile(optimizer=adam, loss="mean_absolute_error")
 
@@ -70,30 +69,30 @@ class ModelNN(Model):
             model.fit(
                 tr_x, tr_y, epochs=nb_epoch, batch_size=128, verbose=2, validation_data=(va_x, va_y), callbacks=[save_best, early_stopping]
             )
+            model_array.append(self.model)
         else:
             model.fit(tr_x, tr_y, nb_epoch=nb_epoch, batch_size=128, verbose=2)
+            model_array.append(self.model)
 
         # モデル・スケーラーの保持
         model.load_weights('nn_model.w8')
         self.model = model
-        self.scaler = scaler
+        # self.scaler = scaler
 
     def predict(self, te_x):
-        te_x = self.one_hot_encoder.transform(te_x[self.categoricals])
-        te_x = self.scaler.transform(te_x)
+        # te_x = self.scaler.transform(te_x)
         pred = self.model.predict(te_x)
         return np.ravel(pred)  # 1次元に変換する
 
     def save_model(self, path):
         model_path = os.path.join(path, f'{self.run_fold_name}.h5')
-        scaler_path = os.path.join(path, f'{self.run_fold_name}-scaler.pkl')
+        # scaler_path = os.path.join(path, f'{self.run_fold_name}-scaler.pkl')
         os.makedirs(os.path.dirname(model_path), exist_ok=True)
         self.model.save(model_path)
-        Util.dump(self.scaler, scaler_path)
+        # Util.dump(self.scaler, scaler_path)
 
     def load_model(self, path):
         model_path = os.path.join(path, f'{self.run_fold_name}.h5')
-        scaler_path = os.path.join(path, f'{self.run_fold_name}-scaler.pkl')
+        # scaler_path = os.path.join(path, f'{self.run_fold_name}-scaler.pkl')
         self.model = load_model(model_path)
-        self.scaler = Util.load(scaler_path)
-        self.one_hot_encoder = Util.load('one-hot-enc.pkl')
+        # self.scaler = Util.load(scaler_path)
