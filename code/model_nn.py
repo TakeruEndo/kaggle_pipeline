@@ -29,10 +29,9 @@ class ModelNN(Model):
         # データのセット・スケーリング
         validation = va_x is not None
 
-        # scaler = StandardScaler()
-        # scaler = MinMaxScaler()
-        # scaler.fit(tr_x)
-        # tr_x = scaler.transform(tr_x)
+        scaler = MinMaxScaler()
+        scaler.fit(tr_x)
+        tr_x = scaler.transform(tr_x)
 
         # パラメータ
         # classes = self.params['classes']
@@ -80,7 +79,7 @@ class ModelNN(Model):
         # self.scaler = scaler
 
     def predict(self, te_x):
-        # te_x = self.scaler.transform(te_x)
+        te_x = self.scaler.transform(te_x)
         pred = self.model.predict(te_x)
         return np.ravel(pred)  # 1次元に変換する
 
