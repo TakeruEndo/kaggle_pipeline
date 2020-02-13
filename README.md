@@ -1,7 +1,7 @@
 データコンペ用のパイプライン
 
 ## 初めに
-本パイプラインは[takapyさんのコード](https://github.com/takapy0210/ml_pipeline)をクローンして作成いたしました :bow:
+本パイプラインは[takapyさんのコード](https://github.com/takapy0210/ml_pipeline)をクローンして作成いたしました :bow: \
 また、kaggleの[House Prices: Advanced Regression Techniques](https://www.kaggle.com/c/house-prices-advanced-regression-techniques)コンペを想定して作成してあります
 
 ## 推論
@@ -14,6 +14,8 @@ $ python3 train_run.py
 ```
 $ python3 optuna_lbgm.py
 ```
+optunaによるlightGBMのハイパーパラメータの探索を行う
+
 
 ## 特徴量作成
 基本的にnotebookで特徴量生成を実施する
