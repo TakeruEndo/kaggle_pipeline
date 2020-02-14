@@ -24,3 +24,16 @@
 
 ## 尖度
 正規分布からのずれを見れる
+
+## データ分析指針
+1. テストデータとトレーニングデータのデータの分布を確認
+分布が違う場合... \
+adversial validation  \
+https://www.slideshare.net/mlm_kansai/kaggle-138546659 \
+2. 
+
+
+3. 次元圧縮
+- U-map  (https://www.kaggle.com/c/kaggler-ja-inclass-competition-1/discussion/62380)
+- 主成分分析
+
