@@ -7,6 +7,7 @@ from keras.layers.normalization import BatchNormalization
 from keras.models import Sequential, load_model
 from keras.utils import np_utils
 from keras import optimizers
+from keras import backend as K
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 from model import Model
@@ -26,57 +27,52 @@ class ModelNN(Model):
 
     def train(self, tr_x, tr_y, va_x=None, va_y=None):
 
+        scaler = StandardScaler()
+        tr_x = scaler.fit_transform(tr_x)
+        va_x = scaler.transform(va_x)
+
         # データのセット・スケーリング
         validation = va_x is not None
 
-        scaler = MinMaxScaler()
-        scaler.fit(tr_x)
-        tr_x = scaler.transform(tr_x)
-
         # パラメータ
-        # classes = self.params['classes']
-        # layers = self.params['layers']
         dropout = self.params['dropout']
         units = self.params['units']
         nb_epoch = self.params['nb_epoch']
         patience = self.params['patience']
 
-        # モデルの構築
+        # ニューラルネットモデルの構築
         model = Sequential()
-        model.add(Dense(units, input_shape=(tr_x.shape[1],)))
-        model.add(PReLU())
-        # model.add(BatchNormalization())
+        model.add(Dense(units, activation='relu', input_shape=(tr_x.shape[1],)))
+        model.add(Dropout(dropout))
+        model.add(Dense(units))
+        model.add(Activation('relu'))
+        model.add(Dropout(dropout))
+        model.add(Dense(units))
+        model.add(BatchNormalization())
+        model.add(Activation('relu'))
         model.add(Dropout(dropout))
 
         # The Output Layer :
         model.add(Dense(1, kernel_initializer='normal', activation='linear'))
 
-        # 多層にする場合
-        # for l in range(layers - 1):
-        #     units = int(units / 2)
-        #     model.add(Dense(units))
-        #     model.add(PReLU())
-        #     model.add(BatchNormalization())
-        #     model.add(Dropout(dropout))
-
-        adam = optimizers.Adam(lr=1e-4)
-        model.compile(optimizer=adam, loss="mean_absolute_error")
+        adam = optimizers.Adam(lr=1e-3)
+        model.compile(optimizer=adam, loss="mean_squared_error")
 
         if validation:
             early_stopping = EarlyStopping(monitor='val_loss', patience=patience, verbose=1, restore_best_weights=True)
             save_best = ModelCheckpoint('nn_model.w8', save_weights_only=True, save_best_only=True, verbose=1)
             model.fit(
-                tr_x, tr_y, epochs=nb_epoch, batch_size=128, verbose=2, validation_data=(va_x, va_y), callbacks=[save_best, early_stopping]
+                tr_x, tr_y, epochs=nb_epoch, batch_size=128, verbose=1, validation_data=(va_x, va_y), callbacks=[save_best, early_stopping]
             )
             model_array.append(self.model)
         else:
-            model.fit(tr_x, tr_y, nb_epoch=nb_epoch, batch_size=128, verbose=2)
+            model.fit(tr_x, tr_y, nb_epoch=nb_epoch, batch_size=128, verbose=1)
             model_array.append(self.model)
 
         # モデル・スケーラーの保持
         model.load_weights('nn_model.w8')
         self.model = model
-        # self.scaler = scaler
+        self.scaler = scaler
 
     def predict(self, te_x):
         te_x = self.scaler.transform(te_x)
@@ -85,13 +81,13 @@ class ModelNN(Model):
 
     def save_model(self, path):
         model_path = os.path.join(path, f'{self.run_fold_name}.h5')
-        # scaler_path = os.path.join(path, f'{self.run_fold_name}-scaler.pkl')
+        scaler_path = os.path.join(path, f'{self.run_fold_name}-scaler.pkl')
         os.makedirs(os.path.dirname(model_path), exist_ok=True)
         self.model.save(model_path)
-        # Util.dump(self.scaler, scaler_path)
+        Util.dump(self.scaler, scaler_path)
 
     def load_model(self, path):
         model_path = os.path.join(path, f'{self.run_fold_name}.h5')
-        # scaler_path = os.path.join(path, f'{self.run_fold_name}-scaler.pkl')
+        scaler_path = os.path.join(path, f'{self.run_fold_name}-scaler.pkl')
         self.model = load_model(model_path)
-        # self.scaler = Util.load(scaler_path)
+        self.scaler = Util.load(scaler_path)
