@@ -37,6 +37,9 @@ $ python3 show_all_features.py
 #### catboost
 - https://blog.amedama.jp/entry/catboost
 
+#### optuna
+- https://github.com/optuna/optuna
+
 #### その他
 - kaggleで勝つデータ分析の技術(2019)
 - 各モデルのドキュメントやnotebook記載のカーネル
