@@ -1,23 +1,19 @@
 import os
 import numpy as np
 from keras.callbacks import EarlyStopping, ModelCheckpoint
-from keras.layers.advanced_activations import PReLU
+# from keras.layers.advanced_activations import PReLU
 from keras.layers.core import Activation, Dense, Dropout
 from keras.layers.normalization import BatchNormalization
 from keras.models import Sequential, load_model
-from keras.utils import np_utils
+# from keras.utils import np_utils
 from keras import optimizers
-from keras import backend as K
+# from keras import backend as K
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 from model import Model
 from util import Util
 
-# tensorflowの警告抑制
-import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
-import tensorflow as tf
-tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+import matplotlib.pyplot as plt
 
 # 各foldのモデルを保存する配列
 model_array = []
@@ -35,7 +31,7 @@ class ModelNN(Model):
         # va_x = va_x.iloc[:, 1:].apply(lambda x: (x - x.mean()) / x.std(), axis=0)
 
         # データのセット・スケーリング
-        validation = va_x is not None
+        # validation = va_x is not None
 
         # パラメータ
         dropout = self.params['dropout']
@@ -59,23 +55,21 @@ class ModelNN(Model):
         model.add(Dense(1, kernel_initializer='normal', activation='linear'))
 
         adam = optimizers.Adam(lr=1e-3)
-        model.compile(optimizer=adam, loss="mean_squared_error")
+        model.compile(optimizer=adam, loss="mean_squared_error", metrics=['accuracy'])
 
-        if validation:
-            early_stopping = EarlyStopping(monitor='val_loss', patience=patience, verbose=1, restore_best_weights=True)
-            save_best = ModelCheckpoint('nn_model.w8', save_weights_only=True, save_best_only=True, verbose=1)
-            model.fit(
-                tr_x, tr_y, epochs=nb_epoch, batch_size=128, verbose=1, validation_data=(va_x, va_y), callbacks=[save_best, early_stopping]
-            )
-            model_array.append(self.model)
-        else:
-            model.fit(tr_x, tr_y, nb_epoch=nb_epoch, batch_size=128, verbose=1)
-            model_array.append(self.model)
-
+        early_stopping = EarlyStopping(monitor='val_loss', patience=patience, verbose=1, restore_best_weights=True)
+        save_best = ModelCheckpoint('nn_model.w8', save_weights_only=True, save_best_only=True, verbose=1)
+        history = model.fit(
+            tr_x, tr_y, epochs=nb_epoch, batch_size=128, verbose=1, validation_data=(va_x, va_y), callbacks=[save_best, early_stopping]
+        )
+            
+        model_array.append(self.model)
+            
         # モデル・スケーラーの保持
         model.load_weights('nn_model.w8')
         self.model = model
         self.scaler = scaler
+        self.history = history
 
     def predict(self, te_x):
         te_x = self.scaler.transform(te_x)
@@ -94,3 +88,6 @@ class ModelNN(Model):
         scaler_path = os.path.join(path, f'{self.run_fold_name}-scaler.pkl')
         self.model = load_model(model_path)
         self.scaler = Util.load(scaler_path)
+
+    def load_history(self):
+        return self.history

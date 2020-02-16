@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 # import japanize_matplotlib
 import seaborn as sns
 import sys
-# import os
+import os
 # import shap
 # import yaml
 from model import Model
@@ -43,6 +43,7 @@ class Runner:
         :feature_dir_name: 特徴量を読み込むディレクトリ
         :model_dir_name: 学習に使用するファイルを保存するディレクトリ
         """
+        self.model_name = setting['model_name']
         self.run_name = run_name
         self.model_cls = model_cls
         self.features = features
@@ -184,6 +185,35 @@ class Runner:
             self.logger.info(f'{self.run_name} fold {i_fold} - start training')
             model, va_idx, va_pred, score = self.train_fold(i_fold)
             self.logger.info(f'{self.run_name} fold {i_fold} - end training - score {score}')
+
+            if self.model_name == 'nn':
+                history = model.load_history()
+                acc = history.history["acc"]
+                val_acc = history.history["val_acc"]
+                loss = history.history["loss"]
+                val_loss = history.history["val_loss"]
+                epochs = range(len(loss))
+                fig = plt.figure()
+                img_loss_path = os.path.join(self.out_dir_name, f'_loss_{i_fold}.png')
+                plt.plot(epochs, loss, label="loss", ls="-", marker="o")
+                plt.plot(epochs, val_loss, label="val_loss", ls="-", marker="x")
+                plt.title('Model loss')
+                plt.ylabel("loss")
+                plt.xlabel("val_loss")
+                plt.legend(loc="best")
+                # ファイルに保存
+                fig.savefig(img_loss_path)
+
+                fig = plt.figure()
+                img_acc_path = os.path.join(self.out_dir_name, f'_acc_{i_fold}.png')
+                plt.plot(epochs, acc, label="acc", ls="-", marker="o")
+                plt.plot(epochs, val_acc, label="val_acc", ls="-", marker="x")
+                plt.title('Model acc')
+                plt.ylabel("acc")
+                plt.xlabel("val_acc")
+                plt.legend(loc="best")
+                # ファイルに保存
+                fig.savefig(img_acc_path)
 
             # モデルを保存する
             model.save_model(self.out_dir_name)
