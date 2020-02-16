@@ -31,6 +31,9 @@ class ModelNN(Model):
         tr_x = scaler.fit_transform(tr_x)
         va_x = scaler.transform(va_x)
 
+        # tr_x = tr_x.iloc[:, 1:].apply(lambda x: (x - x.mean()) / x.std(), axis=0)
+        # va_x = va_x.iloc[:, 1:].apply(lambda x: (x - x.mean()) / x.std(), axis=0)
+
         # データのセット・スケーリング
         validation = va_x is not None
 
