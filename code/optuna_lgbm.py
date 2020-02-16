@@ -13,20 +13,11 @@ We have following two ways to execute this example:
 
 import lightgbm as lgb
 import pandas as pd
-import yaml
 import sklearn.datasets
 import sklearn.metrics
 from sklearn.model_selection import train_test_split
 
 import optuna
-
-CONFIG_FILE = '../configs/config.yaml'
-
-with open(CONFIG_FILE) as file:
-    yml = yaml.load(file)
-
-MODEL_DIR_NAME = yml['SETTING']['MODEL_DIR_NAME']
-FEATURE_DIR_NAME = yml['SETTING']['FEATURE_PATH']
 
 
 class Objective:
@@ -63,58 +54,11 @@ class Objective:
         return accuracy
 
 
-def load_x_train(features) -> pd.DataFrame:
-    """学習データの特徴量を読み込む
-    列名で抽出する以上のことを行う場合、このメソッドの修正が必要
-    :return: 学習データの特徴量
-    """
-    # 学習データの読込を行う
-    dfs = [pd.read_pickle(FEATURE_DIR_NAME + f'{f}_train.pkl') for f in features]
-    df = pd.concat(dfs, axis=1)
-
-    # 特定の値を除外して学習させる場合 -------------
-    # self.remove_train_index = df[(df['age']==64) | (df['age']==66) | (df['age']==67)].index
-    # df = df.drop(index = self.remove_train_index)
-    # -----------------------------------------
-    return df
-
-
-def load_y_train(target) -> pd.Series:
-    """学習データの目的変数を読み込む
-    対数変換や使用するデータを削除する場合には、このメソッドの修正が必要
-    :return: 学習データの目的変数
-    """
-
-    # 目的変数の読込を行う
-    train_y = pd.read_pickle(FEATURE_DIR_NAME + target + '_train.pkl')
-
-    # 特定の値を除外して学習させる場合 -------------
-    # train_y = train_y.drop(index = self.remove_train_index)
-    # -----------------------------------------
-
-    return pd.Series(train_y[target])
-
-
 if __name__ == '__main__':
 
-    # pklからロードする特徴量の指定
-    features = [
-        'acceleration',
-        'car_label_encoder',
-        'cylinders',
-        'displacement',
-        # 'displacement_plus_horsepower',
-        'horsepower',
-        'model_year',
-        'origin',
-        'power',
-        'weight',
-    ]
-
-    target = 'mpg'
-
-    X = load_x_train(features)
-    y = load_y_train(target)
+    train = pd.read_csv("../data/raw/train_2.csv")
+    X = train.drop(['SalePrice'], axis=1)
+    y = train['SalePrice']
 
     objective = Objective(X, y)
 

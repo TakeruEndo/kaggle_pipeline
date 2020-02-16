@@ -284,7 +284,7 @@ class Runner:
         # 学習データの読込を行う
         # dfs = [pd.read_pickle(self.feature_dir_name + f'{f}_train.pkl') for f in self.features]
         # df = pd.concat(dfs, axis=1)
-        train = pd.read_csv("../data/raw/train_2.csv")
+        train = pd.read_csv("../data/raw/train_3.csv")
         train_x = train.drop('SalePrice', axis=1)
 
         # 特定の値を除外して学習させる場合 -------------
@@ -300,7 +300,7 @@ class Runner:
         :return: 学習データの目的変数
         """
         # 目的変数の読込を行う
-        train_y = pd.read_csv("../data/raw/train_2.csv")
+        train_y = pd.read_csv("../data/raw/train_3.csv")
 
         # 特定の値を除外して学習させる場合 -------------
         # train_y = train_y.drop(index = self.remove_train_index)
@@ -312,7 +312,7 @@ class Runner:
         """テストデータの特徴量を読み込む
         :return: テストデータの特徴量
         """
-        test = pd.read_csv("../data/raw/test_2.csv")
+        test = pd.read_csv("../data/raw/test_3.csv")
         return test
 
     def load_stratify_or_group_target(self) -> pd.Series:

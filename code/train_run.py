@@ -12,6 +12,7 @@ from model_lgb import ModelLGB
 from model_xgb import ModelXGB
 from model_cb import ModelCB
 from model_stack import ModelStack
+from model_nn import ModelNN
 from runner import Runner
 from util import Submission
 
@@ -133,10 +134,8 @@ if __name__ == '__main__':
         'metric': 'rmse',
         'num_round': 5000,
         'learning_rate': 0.0013,
-        'max_depth': -2,
+        'max_depth': -1,
         'lambda_l1': 0.313,
-        'lambda_l2': 1.056,
-        'num_leaves': '43',
         'early_stopping_rounds': 1000,
         'verbose': 200,
         'random_state': 999
@@ -161,8 +160,8 @@ if __name__ == '__main__':
 
     Submission.create_submission(run_name, dir_name, setting.get('target'))  # submit作成
 
-    # #  ######################################################
-    # # 学習・推論 xgboost ###################################
+    # # #  ######################################################
+    # # # 学習・推論 xgboost ###################################
 
     # run nameの設定
     run_name = 'xgb'
@@ -185,9 +184,10 @@ if __name__ == '__main__':
         'objective': 'reg:squarederror',
         'eval_metric': 'rmse',
         'num_round': 5000,
+        'learning': 0.0013,
         'early_stopping_rounds': 1000,
         'verbose': 200,
-        'random_state': 999
+        'random_state': 77
     }
 
     runner = Runner(run_name, ModelXGB, features, setting, xgb_params, cv, FEATURE_DIR_NAME, MODEL_DIR_NAME)
@@ -209,8 +209,8 @@ if __name__ == '__main__':
 
     Submission.create_submission(run_name, dir_name, setting.get('target'))  # submit作成
 
-    #####################################################
-    # 学習・推論 catboost ###################################
+    # #####################################################
+    # # 学習・推論 catboost ###################################
 
     # run nameの設定
     run_name = 'cb'
@@ -260,10 +260,10 @@ if __name__ == '__main__':
 
     Submission.create_submission(run_name, dir_name, setting.get('target'))
 
-    ######################################################
-    # 学習・推論 stackingCVR ###################################
+    #####################################################
+    学習・推論 stacking ###################################
 
-    # run nameの設定
+    run nameの設定
     run_name = 'stack'
     run_name = run_name + suffix
     dir_name = MODEL_DIR_NAME + run_name + '/'
@@ -326,7 +326,7 @@ if __name__ == '__main__':
             'min_samples_leaf': 2,
             'verbose': 0
         },
-        # Support Vector Classifier
+        # Support Vector
         'svc_params': {
             'kernel': 'linear',
             'C': 0.025
@@ -346,3 +346,49 @@ if __name__ == '__main__':
     submission['SalePrice'] = np.expm1(pred)
     submission.to_csv(dir_name + f'{run_name}_submission.csv', index=False, columns=['Id', 'SalePrice'])
     print(f'{run_name} - end create submission')
+
+
+    #####################################################
+    # 学習・推論 Neural Network ###################################
+
+    run nameの設定
+    run_name = 'nn'
+    run_name = run_name + suffix
+    dir_name = MODEL_DIR_NAME + run_name + '/'
+
+    # exist_check(MODEL_DIR_NAME, run_name)  # 実行可否確認
+    my_makedirs(dir_name)  # runディレクトリの作成。ここにlogなどが吐かれる
+
+    # 諸々の設定
+    setting = {
+        'run_name': run_name,  # run名
+        'feature_directory': FEATURE_DIR_NAME,  # 特徴量の読み込み先ディレクトリ
+        'target': 'SalePrice',  # 目的変数
+        'calc_shap': False,  # shap値を計算するか否か
+        'save_train_pred': False  # trainデータでの推論値を保存するか否か
+    }
+
+    nn_params = {
+        'dropout': 0.2,
+        'units': 128,
+        'nb_epoch': 100,
+        'patience': 20
+    }
+
+    runner = Runner(run_name, ModelNN, features, setting, nn_params, cv, FEATURE_DIR_NAME, MODEL_DIR_NAME)
+
+    use_feature_name = runner.get_feature_name()  # 今回の学習で使用する特徴量名を取得
+
+    # モデルのconfigをjsonで保存
+    value_list = [features, use_feature_name, nn_params, cv, setting]
+    save_model_config(key_list, value_list, dir_name, run_name)
+
+    # runner.visualize_corr() # 相関係数を可視化して保存
+    if cv.get('method') == 'None':
+        runner.run_train_all()  # 全データで学習
+        runner.run_predict_all()  # 推論
+    else:
+        runner.run_train_cv()  # 学習
+        runner.run_predict_cv()  # 推論
+
+    Submission.create_submission(run_name, dir_name, setting.get('target'))

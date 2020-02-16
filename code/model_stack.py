@@ -22,7 +22,6 @@ train_y = train['SalePrice']
 test = pd.read_csv("../data/raw/test_2.csv")
 
 
-# Sclearn分類機を拡張
 class SklearnHelper(object):
     def __init__(self, clf, seed=0, params=None):
         params['random_state'] = seed
@@ -93,7 +92,7 @@ class ModelStack():
         # 1層目のモデル
         # pred_train_1a, pred_train_1bは、学習データのクロスバリデーションでの予測値
         # pred_test_1a, pred_test_1bは、テストデータの予測値
-        model_1a = xgboost
+        model_1a = ada
         pred_train_1a, pred_test_1a = self.predict_cv(model_1a, train_x, train_y, test)
 
         model_1b = rf
